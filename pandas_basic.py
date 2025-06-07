@@ -1,7 +1,8 @@
 #판다스100제 
 #실제로는 print로 출력해야 함. 구글코랩이라서 print생략된 것.
+#항상 괄호 조심하기
 
-#판다스 불러오기
+#판다스모듈 불러오기
 import pandas as pd
 
 #1. 데이터 프레임 생성해서 출력하기
@@ -51,6 +52,24 @@ boston[~boston['price'].between(10, 30)]
 emp20 = pd.read_csv("/content/drive/MyDrive/data100/emp20.csv", encoding= "euckr")
 emp20
 
-
 #13. 나이가 20대인 학생들의 이름, 나이 출력
 emp20[['ename', 'age']][emp20['age'].between(20, 29)]
+
+#14. isin : 직업이 둘 중 하나인 사원의 이름, 직업 출력
+emp[['ename', 'job']] [emp['job'].isin(['SALESMAN', 'ANALYST'])]
+
+#15. isin : 통신사가 kt, lg인 학생들의 이름, 통신사 출력
+emp20[['ename','telecom']][emp20['telecom'].isin(['kt', 'lg'])]
+
+#16. isin + (~) : kt와 lg가 아닌 학생들
+emp20[['ename', 'telecom']][~emp20['telecom'].isin(['kt', 'lg'])]
+
+#17. 결측치인 데이터 필터: isnull(), isna()
+emp[['ename', 'comm']][emp['comm'].isnull()]
+emp[['ename', 'comm']][emp['comm'].isna()]
+
+#엑셀에 결측치인 데이터는 빈칸인데, 파이썬에서 csv파일 불러와서 출력해보면 결측치인 값은 NaN으로 나옴
+
+#18. 결측치가 아닌! : isnull() + (~) , notna()
+emp[['ename', 'comm']][~emp['comm'].isnull()]
+emp[['ename', 'comm']][emp['comm'].notna()]
