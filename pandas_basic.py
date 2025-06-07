@@ -6,11 +6,11 @@
 import pandas as pd
 
 #1. 데이터 프레임 생성해서 출력하기
-emp = pd.read_csv("파일경로") //파일 읽어서 emp 변수에 담음
-emp //출력
+emp = pd.read_csv("파일경로") #파일 읽어서 emp 변수에 담음
+emp #출력
 
 #2. 특정 컬럼 출력하기
-emp [ ['empno', 'ename', 'sal', 'job']] // 특정 컬럼 출력
+emp [ ['empno', 'ename', 'sal', 'job']] #특정 컬럼 출력
 
 #3. 특정 검색 조건에 해당하는 데이터 검색하기 
 emp[['ename', 'sal', 'job']] [emp['job']=='SALESMAN']
