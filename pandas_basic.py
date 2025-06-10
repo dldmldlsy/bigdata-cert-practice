@@ -73,3 +73,11 @@ emp[['ename', 'comm']][emp['comm'].isna()]
 #18. 결측치가 아닌! : isnull() + (~) , notna()
 emp[['ename', 'comm']][~emp['comm'].isnull()]
 emp[['ename', 'comm']][emp['comm'].notna()]
+
+
+# apply, lambda
+#문제19.  이름의 두번째 철자가 M 인 사원들의 이름 출력
+emp['ename'][emp['ename'].apply(lambda x : x[1]=='M')]
+
+# 문제20.  이름의 끝글자가 T 로 끝나는 사원들의 이름과 월급을 출력
+emp[['ename', 'sal']][emp['ename'].apply(lambda x: x[-1]=='T')]
