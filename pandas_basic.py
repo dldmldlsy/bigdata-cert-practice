@@ -127,3 +127,63 @@ emp[['ename', 'job', 'hiredate']][(emp['job']=='SALESMAN') & (emp['hiredate'].be
 #나눠서 적용하기
 result = emp[['ename', 'job', 'hiredate']][emp['hiredate'].between('1981-01-01', '1981-12-31')]
 result[emp['job']== 'SALESMAN']
+
+
+# 중복 제거 unique
+#29. 타이타닉 데이터의 훈련 데이터인 train.csv 를 불러와서  tit 라는 데이터 프레임을 생성
+tit = pd.read_csv("/content/drive/MyDrive/data100/train.csv")
+tit
+
+#30. 중복 제거해서 컬럼 출력
+tit['Pclass'].unique()
+
+#31. 조건 검색 + 중복제거 컬럼 출력
+emp['job'][emp['deptno']==20].unique()
+# emp[['job']][emp['deptno']==20].unique()  (X)
+# 이렇게 대괄호 두개쓰면 데이터프레임형태이므로 시리즈 함수인 unique 적용불가 -> 에러발생
+
+#32.  sk, kt 인 학생들의 나이를 출력하는데 중복 제거
+emp20['age'][emp20['telecom'].isin(['sk', 'kt'])].unique()
+
+
+#문자 함수 다루기
+#33. 통신사를 대문자로 출력
+emp20['telecom'].str.upper()
+emp20.telecom.str.upper()
+
+#34. 이름과 통신사를 출력 + 그 중 통신사를 대문자로 출력
+#방법1. 통신사 컬럼을 아예 대문자로 바꿔서 저장하고 다시 출력
+emp20['telecom'] = emp20['telecom'].str.upper()
+emp20[['ename', 'telecom']]
+#방법2. concat으로 두 결과 결합하기
+pd.concat([emp20['ename'], emp20['telecom'].str.upper()], axis = 1)
+# axis =1: 양옆, axis =0 : 위아래
+
+#35. 이름과 월급 출력 + 이름 소문자
+#방법1
+emp['ename'] = emp['ename'].str.lower()
+emp[['ename', 'sal']]
+#방법2
+pd.concat([emp['ename'].str.lower(), emp['sal']], axis = 1)
+
+#36. 이름과 월급 출력 + 이름이 scott이고 이름을 소문자로 검색해도 출력되게 *_*
+emp[['ename','sal']][emp['ename'].str.lower()=='scott']
+
+#37. 이름과 통신사를 출력 + 통신사를 첫번째대문자 나머지소문자로
+#방법1
+emp20['telecom'] = emp20['telecom'].str.capitalize()
+emp20[['ename', 'telecom']]
+#방법2
+pd.concat([emp20.ename, emp20.telecom.str.capitalize()], axis=1)
+
+#38. 이름 첫번째부터 두번째 철자까지만 출력
+emp['ename'].str.slice(start=0, stop=2)
+
+#39. 성씨가 김씨인 이름, 나이 출력
+emp20[['ename', 'age']][emp20.ename.str.slice(0, 1)=='김']
+
+#40. 이름, 나이, 주소 출력 + 서울 거주 X + 나이기준 내림차순
+emp20[['ename', 'age']][emp20['address'].str.slice(0, 3)!='서울시'].sort_values(by='age', ascending=False)
+#너무 길면 아래처럼 분할
+result = emp20[['ename', 'age', 'address']][emp20['address'].str.slice(0, 3)!='서울시']
+result.sort_values(by='age', ascending=False)
