@@ -187,3 +187,152 @@ emp20[['ename', 'age']][emp20['address'].str.slice(0, 3)!='서울시'].sort_valu
 #너무 길면 아래처럼 분할
 result = emp20[['ename', 'age', 'address']][emp20['address'].str.slice(0, 3)!='서울시']
 result.sort_values(by='age', ascending=False)
+
+#len
+#41. 이름, 이름 길이 출력 + 이름 길이 긴 순서대로
+emp['ename_len'] = emp['ename'].str.len()
+emp[['ename', 'ename_len']].sort_values(by='ename_len', ascending=False)
+
+#42. 승객이름, 이름길이 출력 + 이름 길이 긴 순서대로
+tit['Name_len'] = tit['Name'].str.len()
+tit[['Name', 'Name_len']].sort_values(by = 'Name_len', ascending = False)
+
+#find
+#43. 이름에 M 자가 포함된 사원들의 이름과 월급 출력
+emp[['ename', 'sal']][emp['ename'].str.find('M')!=-1]
+emp[['ename', 'sal']][emp['ename'].str.find('M')>=0]
+
+#44. 이름에 M 자가 포함되지 않은 사원들의 이름과 월급 출력
+emp[['ename', 'sal']][emp['ename'].str.find('M')==-1]
+
+#숫자타입 문자타입으로 변환
+emp['sal'] = emp['sal'].astype(str)
+
+#replace
+#45. 이름과 월급을 출력 + 월급 숫자0을 *로 대체
+#오답: sal은 숫자타입이라 str를 쓸 수 없음
+emp['sal'] = emp['sal'].str.replace('0', '*')
+#오답: sal 값 자체가 0일 때 *로 바꿔주기 때문에 X
+emp['sal'] = emp['sal'].replace('0', '*')
+#정답
+emp['sal_replace'] = emp['sal'].astype(str).str.replace('0', '*')
+emp[['ename', 'sal_replace']]
+#정답
+emp['sal'] = emp['sal'].astype(str)
+emp['sal'] = emp['sal'].str.replace('0', '*')
+emp[['ename', 'sal']]
+#정답
+pd.concat([emp['ename'], emp['sal'].astype(str).str.replace('0', '*')],axis=1)
+
+#46. *이 숫자 0인걸 알면 보안위험 -> 월급출력 시 숫자0~3을 *로 대체하기
+import re #데이터 전처리 전문 모듈
+# re.sub함수 활용 + sal이 원래 숫자형이니까 문자형으로 변환해주는 작업 필요: str(x)
+emp['sal_star'] = emp['sal'].apply(lambda x: re.sub('[0-3]', '*', str(x)))
+#아니면 아예 아래처럼 문자형으로 변환하는 작업 사전에 하고 람다함수에서는 그냥 x라고 해도 됨.
+emp['sal'] = emp['sal'].astype(str) 
+emp['sal_star'] = emp['sal'].apply(lambda x: re.sub('[0-3]', '*', x))
+#이름이랑 대체한 월급 출력
+emp[['ename', 'sal_star']]
+
+#strip
+#47. emp.csv 파일에 JACK 데이터를 양쪽에 공백을 넣어 입력 + 이름이 jack 인 이름과 월급 출력
+#실제 csv파일 열어서 데이터 추가하고 구글드라이브에 업로드 후 진행 
+emp2[['ename', 'sal']][emp2['ename'].str.strip()=='JACK']
+
+
+#그룹/집계함수
+
+# max
+
+#48. 최대 나이
+emp20['age'].max()
+
+#49. 부서번호가 20번인 사원들의 최대 월급
+emp['sal'][emp['deptno']==20].max()
+
+#50. 직업이 판매원인 사람들의 최대 월급
+emp['sal'][emp['job']=='SALESMAN'].max()
+
+# max + groupby + reset_index
+#51. 직업과 직업별 최대 월급
+emp.groupby('job')['sal'].max() #이것도 맞지만 
+#데이터프레임 형태로 만들어주는 게 보기 좋음
+emp.groupby('job')['sal'].max().reset_index()
+
+#52. tit 에서 Pclass 를 출력하고 Pclass 별 최대운임을 출력
+tit.groupby('Pclass')['Fare'].max().reset_index()
+
+#53. 통신사, 통신사별 최대나이를 출력. + 최대나이 기준 내림차순
+#인덱스가 2 1 0으로 됨 : 이미 데이터프레임을 만들고 거기서 다시 재정렬해서 
+emp20.groupby('telecom')['age'].max().reset_index().sort_values(by='age', ascending=False)
+#인덱스가 0 1 2: 정렬한 후에 데이터프레임으로 만듦
+emp20.groupby('telecom')['age'].max().sort_values(ascending=False).reset_index(name='max_age')
+
+#54. 53번문제 + 컬럼명 변경
+result = emp20.groupby('telecom')['age'].max().sort_values(ascending=False).reset_index()
+result.colums = ['통신사', '최대나이']
+result
+
+# min
+
+#55. 직업, 직업별 최소 얼급 출력 + 최소 월급 오름차순
+result = emp.groupby('job')['sal'].min().sort_values(ascending=True).reset_index()
+result.columns = ['직업', '최소 월급']
+result
+
+#56. 직업, 직업별 최소 월급 + 직업별 최소 월급이 1200 이상인 것만
+result = emp.groupby('job')['sal'].min().reset_index()
+result[result['sal']>=1200]
+#오답: 그룹화한 df랑 뒤에 조건검색할때 쓰이는 emp df랑 달라서 잘못됨
+emp.groupby('job')['sal'].min().reset_index()[emp['sal']>=1200]
+
+# sum
+
+#57. 직업, 직업별 토탈월급 출력 + 토탈월급 내림차순
+result = emp.groupby('job')['sal'].sum().reset_index().sort_values(by = 'sal', ascending=False)
+result.columns = ['직업', '토탈월급']
+result
+
+#58. 57번(직업, 직업별 토탈월급 출력 + 토탈월급 내림차순) + 직업이 판매원인 사람 제외
+result = emp.groupby('job')['sal'].sum().reset_index().sort_values(by='sal', ascending = False)
+result.columns = ['직업', '토탈월급']
+result[result['직업']!='SALESMAN']
+
+#59. 58번(직업, 직업별 토탈월급 출력 + 토탈월급 내림차순 + 직업이 판매원) + 직업별 토탈월급이 5000 이상
+result = emp.groupby('job')['sal'].sum().reset_index()
+result2 = result[(result['job']!='SALESMAN')&(result['sal']>=5000)].sort_values(by='sal', ascending = False)
+result2.columns = ['직업', '토탈월급']
+result2
+
+# mean 평균값
+
+#60. 입사일에서 년도만 추출
+#날짜데이터를 문자형 -> 날짜형으로 변환
+emp['hiredate'] = pd.to_datetime(emp['hiredate'])
+#년도만 추출
+emp.hiredate.dt.year
+emp['hiredate'].dt.year #이렇게도 가능
+
+#61. 사원 데이터프레임에 입사년도(hire_year) 컬럼 추가
+#입사일에서 입사년도만 추출해서 새로운 컬럼으로 만들어서 넣기
+emp['hiredate'] = pd.to_datetime(emp['hiredate'])
+emp['hire_year'] = emp['hiredate'].dt.year
+emp
+
+#62. 입사년도, 년도별 평균월급 출력
+emp['hire_year'] = pd.to_datetime(emp['hiredate']).dt.year
+emp.groupby('hire_year')['sal'].mean().reset_index()
+
+#63. 입사년도, 입사년도별 평균월급 출력 + 년도별 평균월급이 높은 순
+emp['hire_year'] = pd.to_datetime(emp['hiredate']).dt.year
+result = emp.groupby('hire_year')['sal'].mean().reset_index()
+result.columns = ['입사한 년도', '평균월급']
+result.sort_values(by='평균월급', ascending = False)
+
+# count 카운팅
+# 결측치가 있는 데이터는 제외하고 카운트함! -> 결측치가 없는 컬럼으로 카운트하기!
+
+#64 직업, 직업별 인원수 출력 + 직업별 인원수가 3명 이상인 것만
+result = emp.groupby('job')['empno'].count().reset_index()
+result.columns = ['직업', '인원수']
+result[result['인원수']>=3]
