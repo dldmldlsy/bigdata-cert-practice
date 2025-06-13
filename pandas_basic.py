@@ -336,3 +336,106 @@ result.sort_values(by='평균월급', ascending = False)
 result = emp.groupby('job')['empno'].count().reset_index()
 result.columns = ['직업', '인원수']
 result[result['인원수']>=3]
+
+
+#65. 주소 출력 + 앞에 3글자만 출력
+emp20['address'].str.slice(0, 3)
+
+#66. 65번 결과를 담는 컬럼을 address2라는 이름으로 생성하기
+emp20['address2'] = emp20['address'].str.slice(0, 3)
+emp20
+
+#67. address2, address2별 인원수 출력
+emp20['address2'] = emp20['address'].str.slice(0, 3)
+emp20.groupby('address2')['empno'].count().reset_index()
+
+#68. 통신사,address2, 통신사별 address2별 인원수 출력 
+emp20['address2'] = emp20['address'].str.slice(0, 3)
+emp20.groupby(['telecom', 'address2'])['empno'].count().reset_index()
+
+
+#rank
+
+#69. 이름, 나이, 나이에 대한 순위 출력 
+emp20['순위'] = emp20['age'].rank(ascending=False).astype(int)
+emp20[['ename', 'age', '순위']].sort_values(by='순위')
+#method=dense: 더 빽빽하게 순위 매김 
+emp20['순위'] = emp20['age'].rank(method='dense', ascending=False).astype(int)
+emp20[['ename', 'age', '순위']].sort_values(by='순위')
+
+
+#70 직업이판매원인 + 이름, 월급, 직업, 월급에 대한 순위 출력 
+result = emp[emp['job']=='SALESMAN'] 
+result['순위'] = result['sal'].rank(ascending=False).astype(int)
+result[['ename', 'sal', 'job', '순위']].sort_values('순위')
+#순위를 먼저 만들고 추후에 직원 판매원 필터링하면 결과적으로 보이는 순위가 1부터 시작안할 수 있음
+
+#잠깐
+#result에 새 컬럼 추가하려고 하니까 result가 뷰(원본일부)인지 복사본인지 확인 필요하다는 경고문구 뜸!
+#원본 컬럼 수정하는 건 중요한 일이니까 뜨는 것같음. 
+#복사본이라고 확실하게 표시하려면 result만들 때 뒤에 .copy()붙여서 경고 없앨 수 있음
+
+
+#71. 부서번호, 이름, 월급, 월급순위 출력 + 부서번호별 월급 높은순서대로 순위부여 *_*
+#부서번호별로 각각 순위가 부여되어야 함
+emp['순위'] = emp.groupby('deptno')['sal'].rank(ascending=False).astype(int)
+emp[['deptno', 'ename', 'sal', '순위']].sort_values(by=['deptno', '순위'])
+
+#72. 통신사, 이름, 나이, 순위(통신사별 나이 높은 순서대로 높은 순위 부여) 출력
+emp20['순위'] = emp20.groupby('telecom')['age'].rank(ascending=False).astype(int)
+emp20[['telecom', 'ename', 'age', '순위']].sort_values(by=['telecom', '순위'], ascending = True)
+
+
+# qcut
+
+#73. 이름, 나이, 나이등급(5등급으로 나눠서 등급 오름차순 출력, 등급안에서 나이는 내림차순 출력)
+#순위 만들어서 등급 정렬
+emp20['순위'] = emp20['age'].rank(method='dense', ascending=False).astype(int)
+emp20['age_grade'] = pd.qcut(emp20['순위'], q=5, labels=[1, 2, 3, 4, 5])
+emp20[['ename', 'age', 'age_grade']].sort_values(by='age_grade')
+#나이에서 바로 등급 저렬
+emp20['age_grade'] = pd.qcut(emp20['age'], q=5, labels=[5, 4, 3, 2, 1]).astype(int)
+emp20[['ename', 'age', 'age_grade']].sort_values(by=['age_grade', 'age'], ascending=[True, False])
+
+#74. 타이타닉 age의 Null값을 나이의 평균값으로 채워 넣기 
+age_mean = tit['Age'].mean()
+round(age_mean) #반올림
+
+#결측치 있는지 확인: 컬럼별 결측치 데이터 수 총합 출력
+tit.isnull().sum()
+#결측치 채우기 = 컬럼에 값 채우기 : fillna
+#df[컬럼명].fillna(채울값, inplace)
+#inplace = True : 제자리에서 원본 tit을 직접 수정하고 None 반환, False: 수정된 결과를 새 객체로 반환하고 원본은 그대로 두겠다
+tit['Age'].fillna(round(age_mean), inplace=True)
+tit.isnull().sum() #기존에 나이 컬럼 결측지 177개 였는데 0개 된 거 확인
+
+#tit['Age'].fillna...~ 여기서 tit['Age'] 시리즈를 수정하고 잇는데 이게 원본인지 복사본인지 불확실해서 경고 뜸
+tit['Age'] = tit['Age'].fillna(round(age_mean)) #아예 이렇게 대입해버리면 괜찮음
+
+#75. 나이와 순위 출력 + 나이가 높을 수록 높은 순위
+tit['Age'] = tit['Age'].fillna(round(tit['Age'].mean()))
+tit['순위'] = tit['Age'].rank(ascending=False).astype(int)
+tit[['Age', '순위']].sort_values(by='순위')
+
+#76. 나이를 4등급으로 나눈 age_grade라는 컬럼 생성하여 타이타닉 테이블 출력
+tit['순위'] = tit['Age'].rank(ascending=False).astype(int)
+tit['age_grade']=pd.qcut(tit['순위'], q=4, labels=[1, 2, 3, 4])
+tit
+
+#순위 안만들고 나이로 바로 등급 나누기
+tit['age_grade'] = pd.qcut(tit['Age'], q=4, labels=[4, 3, 2, 1]).astype(int)
+tit
+
+#여러가지 시도하다가 컬럼 여러개돼서 지우고 싶을 때 두가지 방법
+del tit['나이순위']
+tit.drop(columns=['나이순위'], inplace=True)
+
+
+# 가로로 출력: apply(list)
+#77. 통신사, 통신사별 학생 이름 가로로 출력
+emp20.groupby('telecom')['ename'].apply(list).reset_index(name='employee')
+
+# shift
+#78. 이름, 입사일, 바로전행의 입사일 출력: shift 방향 주의
+emp['lag_hiredate'] = emp['hiredate'].shift(1).astype(object)
+emp[['ename', 'hiredate', 'lag_hiredate']]
