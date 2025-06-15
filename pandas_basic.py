@@ -439,3 +439,171 @@ emp20.groupby('telecom')['ename'].apply(list).reset_index(name='employee')
 #78. 이름, 입사일, 바로전행의 입사일 출력: shift 방향 주의
 emp['lag_hiredate'] = emp['hiredate'].shift(1).astype(object)
 emp[['ename', 'hiredate', 'lag_hiredate']]
+
+
+# pivot
+
+#79. 직업, 직업별 토탈월급 출력 + 피벗형태(열인덱스가 직업, 값이 직업별 토탈월급)
+emp.pivot_table(values='sal', columns='job', aggfunc='sum')
+
+#80. 직업, 부서번호, 직업별 부서번호별 토탈월급 출력(열인덱스가 부서번호, 행인덱스가 직업, 값이 토탈월급) 
+emp.pivot_table(values='sal', index='job', columns='deptno', aggfunc='sum')
+
+#81. 주소 앞글자 3글자를 담는 파생변수 address_front_3 컬럼으로 만들기
+emp20['address_front_3']=emp20['address'].str.slice(0, 3)
+
+#82. address_front_3 별 인원수 구하기
+emp20['address_front_3']=emp20['address'].str.slice(0, 3) 
+#인원수를 출력해야해서 values에 결측치가 없는 컬럼을 넣고 aggfunc에 count
+result = emp20.pivot_table(values='empno', columns='address_front_3', aggfunc='count')
+
+
+#sql join
+
+#83. dept.csv를 dept 데이터프레임으로 구성
+dept=pd.read_csv("/content/drive/MyDrive/data100/dept.csv")
+dept
+
+#84. 이름과 부서위치 출력: emp, dept join 필요
+emp_dept = pd.merge(emp, dept, on='deptno')
+emp_dept[['ename', 'loc']]
+
+#85. 직업이 판매원인 사원들의 이름, 부서위치 출력
+emp_dept = pd.merge(emp, dept, on='deptno')
+emp_dept[['ename','job', 'loc']][emp['job']=='SALESMAN']
+
+#86. 월급이 1000~3000인 사원들의 이름, 부서위치, 월급 출력
+emp_dept = pd.merge(emp, dept, on='deptno')
+emp_dept[['ename', 'loc', 'sal']][emp['sal'].between(1000, 3000)]
+
+#87. 월급이 1000~3000 + 직업이 판매원 + 이름, 부서위치, 월급, 직업 출력
+emp_dept = pd.merge(emp, dept, on='deptno')
+emp_dept[['ename', 'loc', 'sal', 'job']][(emp['sal'].between(1000, 3000))&(emp['job']=='SALESMAN')]
+
+# join how 
+
+#88. 이름, 부서위치 출력 + 부서위치에 BOSTON도 같이 출력
+# 부서번호 40번의 부서위치가 BOSTON인데, emp에 부서번호가 40번인 사원이 없음 
+# => dept테이블 모두 나오게 right join 활용 필요
+emp_dept = pd.merge(emp, dept, on='deptno', how='right')
+emp_dept[['ename', 'loc']]
+
+#89. 주어진 SQL을 판다스로 구현
+# select  e.ename,  d.loc
+#    from   emp   e,   dept    d
+#    where    e.deptno = d.deptno (+) ;
+#(+) : emp기준으로 다 출력한다는 것 => left outer join
+emp_dept = pd.merge(emp, dept, on='deptno', how='left')
+emp_dept[['ename', 'loc']]
+
+#90. 주어진 SQL 판다스로 구현
+# select  e.ename,  d.loc
+#  from   emp   e    full   outer    join    dept    d
+#   on   ( e.deptno = d.deptno );
+# full outer => 양쪽 다 출력
+emp_dept = pd.merge(emp, dept, on='deptno', how='outer')
+emp_dept[['ename', 'loc']]
+
+# 그룹화 + 집계 + 조인
+#91. 부서위치, 부서위치별 토탈월급을 출
+# select   d.loc,   sum(e.sal)
+#   from   emp   e,   dept   d
+#   where   e.deptno = d.deptno
+#   group    by   d.loc;
+emp_dept =  pd.merge( emp, dept, on='deptno', how='inner')
+result = emp_dept.groupby('loc')['sal'].sum().reset_index()
+result.columns = ['부서위치','토탈월급']
+result
+
+#92. 부서명, 부서명별 평균월급을 출력
+emp_dept = pd.merge(emp, dept, on='deptno', how='inner')
+result = emp_dept.groupby('dname')['sal'].mean().reset_index()
+result.columns=['부서명', '평균월급']
+result
+
+#93. 부서번호 10번, 20번인 사원들의 이름, 월급, 부서번호 출력 
+    # 그 밑에 바로 부서번호가 10번인 이름, 월급, 부서번호 출력 (합집합)
+    """
+select  ename, sal, deptno
+   from   emp
+   where   deptno   in ( 10, 20 )
+union   all
+  select   ename, sal, deptno
+   from  emp
+   where   deptno = 10;
+   """
+result1 = emp[['ename', 'sal', 'deptno']][emp['deptno'].isin([10, 20])]
+result2 = emp[['ename', 'sal', 'deptno']][emp['deptno']==10]
+pd.concat([result1, result2], axis=0)
+
+#94. 통신사가 kt, lg인 학생들의 이름, 나이, 통신사 출력 + 
+#    그 밑에 통신사가 sk, lg인 학생들의 이름, 나이, 통신사 출력 (합집합 + 중복제거)
+result1 = emp20[['ename', 'age', 'telecom']][emp20['telecom'].isin(['kt', 'lg'])]
+result2 = emp20[['ename', 'age', 'telecom']][emp20['telecom'].isin(['sk', 'lg'])]
+pd.concat([result1, result2], axis=0)
+
+#95. 94번 + 중복되는 행 제거하고 출력
+result1 = emp20[['ename', 'age', 'telecom']][emp20['telecom'].isin(['kt', 'lg'])]
+result2 = emp20[['ename', 'age', 'telecom']][emp20['telecom'].isin(['sk', 'lg'])]
+pd.concat([result1, result2], axis=0).drop_duplicates()
+
+#96. SQL 판다스로 구현 (차집합)
+"""
+select  ename, sal, deptno
+   from   emp
+minus
+  select   ename, sal, deptno
+   from  emp_old_backup
+"""
+
+result1 = emp[['ename', 'sal', 'deptno']]
+result2 = emp_old_backup[['ename', 'sal', 'deptno']]
+result1[result1['ename'].isin(result2['ename'])==False] 
+
+#또는
+emp[['ename', 'sal', 'deptno']][emp['ename'].isin(emp_old_backup['ename'])==False]
+
+#97. SQL 판다스로 구현 (차집합)
+"""
+select    ename,  age,  telecom
+   from   emp20
+   where  telecom  in ('kt', 'lg')
+minus
+select  ename, age, telecom
+   from   emp20
+   where  telecom in ('sk', 'lg');
+"""
+result1 = emp20[['ename', 'age', 'telecom']][emp20['telecom'].isin(['kt', 'lg'])]
+result2 = emp20[['ename', 'age', 'telecom']][emp20['telecom'].isin(['sk', 'lg'])]
+result1[result1['ename'].isin(result2['ename'])==False]
+
+#애초에 kt만 출력해도 답은 똑같음
+emp20[['ename', 'age', 'telecom']][emp20['telecom']=='kt']
+
+
+#98. SQL 판다스로 구현
+"""
+select  ename, sal, deptno
+   from   emp
+intersect
+  select   ename, sal, deptno
+   from  emp_old_backup
+"""
+result1 = emp[['ename', 'sal', 'deptno']]
+result2 = emp_old_backup[['ename', 'sal', 'deptno']]
+result1[result1['ename'].isin(result2 ['ename'])]
+
+#아래도 정답
+emp[['ename', 'sal', 'deptno']][emp['ename'].isin(emp_old_backup['ename'])]
+
+# 99, 100번은 market csv 파일 못받아서 실행 못해봄! 
+#99. 공공 데이터 포털 서울시 소상공인 데이터 검색
+market_2017 = pd.read_csv("/content/drive/MyDrive/data100/market_2017.csv", encoding='cp949')
+market_2022 = pd.read_csv("/content/drive/MyDrive/data100/market_2022.csv", encoding='cp949')
+market_2022
+
+#100. 2017년에 존재했는데 2022년엔 사라진 편의점 개수 구하기 (=차집합)
+x1 = market_2017[['상가업소번호']] [ market_2017['상권업종소분류명']=='편의점']
+x2 = market_2022[['상가업소번호']] [ market_2022['상권업종소분류명']=='편의점']
+x1[ x1.상가업소번호.isin(x2.상가업소번호) == False ]
+x3[['상가업소번호']].count()
