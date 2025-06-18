@@ -152,3 +152,98 @@ from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler()
 df['f5']=scaler.fit_transform(df[['f5']])
 print(df['f5'].median())
+
+
+
+# [py] T1-11. min-max 기준 상하위 5%값
+# 주어진 데이터에서 'f5'컬럼을 min-max 스케일 변환한 후, 상위 5%와 하위 5% 값의 합을 구하시오
+
+import pandas as pd
+import numpy as np
+
+df = pd.read_csv('../input/bigdatacertificationkr/basic1.csv')
+
+df['f5_scaled'] = (df['f5'] - df['f5'].min())/(df['f5'].max()-df['f5'].min())
+
+
+up_five = df['f5_scaled'].quantile(0.95)
+down_five = df['f5_scaled'].quantile(0.05)
+
+print(up_five+down_five)
+
+
+
+# [py] T1-12. 상위 10개, 하위 10개 차이
+# 주어진 데이터에서 상위 10개 국가의 접종률 평균과 하위 10개 국가의 접종률 평균을 구하고, 그 차이를 구해보세요 
+
+# 나라별 제일 큰 값 남기기(수치형 데이터들에 대해서 적용됨)
+df2= df.groupby('country').max()
+# ratio에만 적용하고 싶으면 아래와 같이 할 수 있음
+# df2 = df.loc[df.groupby('country')['ratio'].idxmax()]
+
+# 접종률 100% 넘으면 제거
+drop_index = df2[df2['ratio']>100].index
+df2.drop(drop_index, axis=0, inplace=True)
+#print(drop_index)
+# df2 = df2[df2['ratio']<=100] 이렇게도 가능
+
+df2['순위'] = df2['ratio'].rank(ascending=False).astype(int)
+df2 = df2.sort_values(by='순위', ascending=True)
+up_ten= df2['ratio'][df2['순위']<=10].mean()
+down_ten=df2['ratio'][df2['순위']>df2.shape[0]-10].mean()
+
+#rank안써도 head(10), tail(10)하면 빠르게 상위, 하위 구할 수 있음! 
+print(round(up_ten-down_ten, 1))
+
+
+
+# [py] T1-13. 상관관계 구하기
+# 주어진 데이터에서 상관관계를 구하고, quality와의 상관관계가 가장 큰 값과, 가장 작은 값을 구한 다음 더하시오!
+# 단, quality와 quality 상관관계 제외, 소수점 둘째 자리까지 반올림하여 계산
+
+import pandas as pd
+import numpy as np
+
+# 데이터 불러오기
+df = pd.read_csv("../input/red-wine-quality-cortez-et-al-2009/winequality-red.csv")
+
+df_corr = df.corr()
+#print(df.shape[1])
+#print(df_corr.head(12))
+df_corr = df_corr['quality'].drop('quality').reset_index()
+df_corr= df_corr.sort_values(by='quality', ascending=False)
+print(df_corr.head(11))
+print(round(df_corr['quality'].max()-df_corr['quality'].min(), 2))
+
+
+
+# [py] T1-14. 2개 조건에 따른 상위 값
+# city와 f4를 기준으로 f5의 평균값을 구한 다음, f5를 기준으로 상위 7개 값을 모두 더해 출력하시오 (소수점 둘째자리까지 출력)
+
+import pandas as pd
+
+df = pd.read_csv("../input/bigdatacertificationkr/basic1.csv")
+
+df = df.groupby(['city', 'f4'])['f5'].mean().reset_index()
+df = df.sort_values(by='f5', ascending = False)
+df = df.head(7)
+print(round(df['f5'].sum(), 2))
+
+
+
+# [py] T1-15. 슬라이싱 & 조건
+# 주어진 데이터 셋에서 age컬럼 상위 20개의 데이터를 구한 다음 
+# f1의 결측치를 중앙값으로 채운다.
+# 그리고 f4가 ISFJ와 f5가 20 이상인 
+# f1의 평균값을 출력하시오!
+
+import pandas as pd
+
+# 데이터 불러오기
+df = pd.read_csv("../input/bigdatacertificationkr/basic1.csv")
+
+df_20 = df.sort_values(by='age', ascending=False).head(20)
+df_f1_median = df_20['f1'].median()
+df_20['f1'] = df_20['f1'].fillna(df_f1_median)
+f1_mean = df_20['f1'][(df_20['f4']=='ISFJ')&(df_20['f5']>=20)].mean()
+print(f1_mean)
