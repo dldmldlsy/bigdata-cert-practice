@@ -300,3 +300,54 @@ print(round(abs(df2_grouped['Sales'].max()-df3_grouped['Sales'].max())))
 
 
 
+# [py] T1-22. 시계열4
+# 주어진 데이터(basic2.csv)에서 주 단위 Sales의 합계를 구하고, 가장 큰 값을 가진 주와 작은 값을 가진 주의 차이를 구하시오(절대값)
+
+import pandas as pd
+
+df = pd.read_csv("/kaggle/input/bigdatacertificationkr/basic2.csv")
+df['Date'] = pd.to_datetime(df['Date'])
+df.head()
+# df의 기존 인덱스(0, 1, 2, 3,,)를 Date 컬럼으로 변경
+df.set_index('Date', inplace=True)
+#resample: 시계열 groupby, 'W' : 주단위
+weekly_sum = df['Sales'].resample('W').sum()
+print(weekly_sum.max()-weekly_sum.min())
+
+#기존 df 활용
+import pandas as pd
+
+df = pd.read_csv("/kaggle/input/bigdatacertificationkr/basic2.csv")
+df['Date'] = pd.to_datetime(df['Date'])
+df.head()
+# 기존 df를 활용
+#resample: 시계열 groupby, 'W' : 주단위
+weekly_sum = df.resample('W', on = 'Date')['Sales'].sum()
+print(weekly_sum.max()-weekly_sum.min())
+
+
+
+# [py] T1-23. 중복 데이터 제거
+# f1의 결측치를 채운 후 age 컬럼의 중복 제거 전과 후의 'f1' 중앙값 차이를 구하시오
+# 결측치는 'f1' 데이터에서 큰 값 순으로 정렬했을 때 10번째에 위치한 값으로 채운다.
+# 중복 데이터 발생시 뒤에 나오는 데이터를 삭제함**
+import pandas as pd
+
+#데이터 불러오기
+df = pd.read_csv("/kaggle/input/bigdatacertificationkr/basic1.csv")
+
+#f1 결측치 채우기
+df = df.sort_values(by='f1', ascending=False)
+
+value = df.iloc[9]['f1']
+df['f1'] = df['f1'].fillna(value)
+
+# 중복 제거 전 f1 중앙값
+before_f1_median = df['f1'].median()
+
+# age 컬럼 중복 제거: drop_duplicates()
+unique_age_df = df.drop_duplicates(subset='age')
+
+after_f1_median = unique_age_df['f1'].median()
+
+print(abs(before_f1_median-after_f1_median))
