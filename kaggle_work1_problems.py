@@ -247,3 +247,56 @@ df_f1_median = df_20['f1'].median()
 df_20['f1'] = df_20['f1'].fillna(df_f1_median)
 f1_mean = df_20['f1'][(df_20['f4']=='ISFJ')&(df_20['f5']>=20)].mean()
 print(f1_mean)
+
+
+
+# [py] T1-17. 시계열1
+# 2022년 5월 sales의 중앙값을 구하시오
+import pandas as pd
+import numpy as np
+
+df = pd.read_csv("/kaggle/input/bigdatacertificationkr/basic2.csv")
+
+df.head()
+df['Date'] = pd.to_datetime(df['Date'])
+result = df['Sales'][(df['Date'].dt.year==2022)&(df['Date'].dt.month==5)].median()
+print(result)
+
+
+
+# [py] T1-18. 시계열2
+# 주어진 데이터에서 2022년 5월 주말과 평일의 sales컬럼 평균값 차이를 절대값으로 구하시오 (소수점 둘째자리까지 출력, 반올림)
+import pandas as pd
+
+df = pd.read_csv("/kaggle/input/bigdatacertificationkr/basic2.csv")
+
+df.head
+
+df['Date'] = pd.to_datetime(df['Date'])
+df['Date_2205'] = df['Date'][(df['Date'].dt.year==2022) & (df['Date'].dt.month==5)]
+
+weekday_mean = df['Sales'][df['Date_2205'].dt.weekday.between(0, 4)].mean()
+weekend_mean = df['Sales'][df['Date_2205'].dt.weekday.between(5, 6)].mean()
+print(round(abs(weekday_mean-weekend_mean),2))
+
+
+
+# [py] T1-19. 시계열3
+# 주어진 데이터에서 2022년 월별 Sales 합계 중 가장 큰 금액과 2023년 월별 Sales 합계 중 가장 큰 금액의 차이를 절대값으로 구하시오
+
+import pandas as pd
+
+df = pd.read_csv("/kaggle/input/bigdatacertificationkr/basic2.csv")
+df['Sales'] = df.apply(lambda x: x['Sales']*0.8 if x['Events']==1 else x['Sales'], axis=1)
+df['Date'] = pd.to_datetime(df['Date'])
+df2 = df[df['Date'].dt.year==2022]
+df3 = df[df['Date'].dt.year==2023]
+df2.loc[:, 'month']=df2['Date'].dt.month
+df3.loc[:, 'month']=df3['Date'].dt.month
+df2_grouped = df2.groupby('month')['Sales'].sum().reset_index()
+df3_grouped = df3.groupby('month')['Sales'].sum().reset_index()
+
+print(round(abs(df2_grouped['Sales'].max()-df3_grouped['Sales'].max())))
+
+
+
