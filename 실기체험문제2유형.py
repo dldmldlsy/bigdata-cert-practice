@@ -1,3 +1,4 @@
+# 빅분기 실기 2유형 체험 환경 문제
 import pandas as pd
 
 train = pd.read_csv("data/customer_train.csv")
